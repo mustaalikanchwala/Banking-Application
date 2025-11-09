@@ -18,7 +18,15 @@ public class AccountRepo {
         return Optional.ofNullable(accountByNumber.get(accountNumber));
     }
 
-    public Account findAccountByNames(String searchedName) {
-        return
+
+
+    public List<Account> findByCustomerId(String customerId) {
+        List<Account> result = new ArrayList<>();
+        for(Account a : accountByNumber.values()){
+            if(a.getCustomerId().equals(customerId)){
+                result.add(a);
+            }
+        }
+        return result;
     }
 }

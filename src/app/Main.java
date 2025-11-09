@@ -22,6 +22,7 @@ public class Main {
         5) Account Statement
         6) List Accounts
         7) Search Accounts by Customer Name
+        8) Account Balance
         0) Exit
 """);
         System.out.print("CHOOSE : ");
@@ -36,15 +37,29 @@ public class Main {
             case "5" -> accStatement(sc,bankService);
             case "6" -> listAccount(sc,bankService);
             case "7" -> searchAccount(sc,bankService);
+            case "8" -> getAccountBalance(sc,bankService);
             case "0" -> running = false;
         }
         }
     }
 
+    private static void getAccountBalance(Scanner sc, BankService bankService) {
+        System.out.println("ACCOUNT NUMBER : ");
+        String accountNumber = sc.nextLine().trim();
+        System.out.println("ACCOUNT TYPE :");
+        String accountType =sc.nextLine().trim();
+        bankService.getAccountBalance(accountNumber).forEach( a -> {
+            System.out.println(a.getAccountNumber()+ " | " + a.getCustomerId() + " | "+ a.getAccountType() + " | "+ a.getBalance());
+        });
+
+    }
+
     private static void searchAccount(Scanner sc , BankService bankService) {
         System.out.print("SEARCH ACCOUNT BY NAME : ");
         String searchedName = sc.nextLine().trim();
-        bankService.searchAccountByName(searchedName);
+        bankService.searchAccountByName(searchedName).forEach( a -> {
+            System.out.println(a.getAccountNumber()+ " | " + a.getCustomerId() + " | "+ a.getAccountType() + " | "+ a.getBalance());
+        });
     }
 
     private static void listAccount(Scanner sc,BankService bankService) {

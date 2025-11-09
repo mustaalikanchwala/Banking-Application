@@ -5,6 +5,7 @@ import domain.Customer;
 import domain.Transaction;
 import domain.Type;
 import repository.AccountRepo;
+import repository.CustomerRepo;
 import repository.TransactionRepo;
 import service.BankService;
 
@@ -16,17 +17,18 @@ public class BankServiceImpl implements BankService {
 
   private final AccountRepo saveAccount = new AccountRepo();
   private final TransactionRepo saveTransaction = new TransactionRepo();
+  private final CustomerRepo saveCustomer = new CustomerRepo();
 
     @Override
     public String openAccount(String customerName, String customerEmail, String accountType) {
         String customerId = UUID.randomUUID().toString();
-//        String accountNumber = UUID.randomUUID().toString();
+        Customer newCustomer = new Customer(customerId,customerName,customerEmail);
+        saveCustomer.save(newCustomer);
         String accountNumber = getAccountNumber();
 //        It will create an object of Account but does not save the account
 //        to save the Account we will create a repository folder in which create Account repo class and store detail in map.
         Account newAccount = new Account(accountNumber,customerId,accountType,0.0);
         saveAccount.save(newAccount);
-        Customer newCustomer = new Customer(customerId,customerName,customerEmail);
         return accountNumber;
     }
 
@@ -90,7 +92,26 @@ public class BankServiceImpl implements BankService {
     @Override
     public List<Account> searchAccountByName(String searchedName) {
         String name = (searchedName == null ) ? "" : searchedName.toLowerCase();
-        return new ArrayList<>(saveAccount.findAccountByNames(name));
+//        List<Account> result = new ArrayList<>();
+//        for(Customer c : saveCustomer.findAll()){
+//            if(c.getName().toLowerCase().contains(name)){
+//                result.addAll(saveAccount.findByCustomerId(c.getId()));
+//            }
+//        }
+//        result.sort(Comparator.comparing(Account::getAccountNumber));
+//    return result;
+//        now above logic using stream
+        return saveCustomer.findAll()
+                .stream()
+                .filter(c -> c.getName().toLowerCase().contains(name))
+                .flatMap(c -> saveAccount.findByCustomerId(c.getId()).stream())
+                .sorted(Comparator.comparing(Account::getAccountNumber))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Account> getAccountBalance(String accountNumber) {
+        return Collections.singletonList(saveAccount.findByNumber(accountNumber).orElseThrow(() -> new RuntimeException("Account not found")));
     }
 
     private String getAccountNumber() {
