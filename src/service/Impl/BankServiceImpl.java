@@ -4,6 +4,9 @@ import domain.Account;
 import domain.Customer;
 import domain.Transaction;
 import domain.Type;
+import exceptions.AccountNotFoundException;
+import exceptions.InsufficientBalanceException;
+import exceptions.ValidationException;
 import repository.AccountRepo;
 import repository.CustomerRepo;
 import repository.TransactionRepo;
@@ -41,7 +44,7 @@ public class BankServiceImpl implements BankService {
 
     @Override
     public void deposite(String accountNumber,String Accounttype, Double depositeAmount, String note) {
-        Account account = saveAccount.findByNumber(accountNumber).orElseThrow(() -> new RuntimeException("Account not found : "+accountNumber));
+        Account account = saveAccount.findByNumber(accountNumber).orElseThrow(() -> new AccountNotFoundException("Account not found : "+accountNumber));
         account.setBalance((account.getBalance()+depositeAmount));
         Transaction transaction = new Transaction(UUID.randomUUID().toString(),Accounttype, Type.DEPOSIT,accountNumber,depositeAmount, LocalDateTime.now(),note);
         saveTransaction.save(transaction);
@@ -49,7 +52,7 @@ public class BankServiceImpl implements BankService {
 
     @Override
     public void withDraw(String accountNumber, String Accounttype, Double withdrawAmount, String note) {
-        Account account = saveAccount.findByNumber(accountNumber).orElseThrow(() -> new RuntimeException("Account not found : "+accountNumber));
+        Account account = saveAccount.findByNumber(accountNumber).orElseThrow(() -> new AccountNotFoundException("Account not found : "+accountNumber));
 //        The compareTo() method compares two numbers and returns a result:
 //
 //        Returns negative number (like -1) if the first number is smaller
@@ -58,7 +61,7 @@ public class BankServiceImpl implements BankService {
 //
 //        Returns positive number (like 1) if the first number is larger
         if(account.getBalance().compareTo(withdrawAmount) < 0){
-            throw new RuntimeException("INSUFFICIENT BALANCE");
+            throw new InsufficientBalanceException("INSUFFICIENT BALANCE");
         }
         account.setBalance((account.getBalance()-withdrawAmount));
         Transaction transaction = new Transaction(UUID.randomUUID().toString(),Accounttype, Type.WITHDRAW,accountNumber,withdrawAmount, LocalDateTime.now(),note);
@@ -68,13 +71,13 @@ public class BankServiceImpl implements BankService {
     @Override
     public void transfer(String senderAccountNumber, String senderAccountType,String reciverAccountNumber,String reciverAccountType, Double transferAmount, String note) {
         if(senderAccountNumber.equals(reciverAccountNumber)){
-            throw new RuntimeException("Cannot transfer in same Account");
+            throw new ValidationException("Cannot transfer in same Account");
         }
-        Account senderAccount = saveAccount.findByNumber(senderAccountNumber).orElseThrow(() -> new RuntimeException("Account not found : "+senderAccountNumber));
-        Account reciverAccount = saveAccount.findByNumber(reciverAccountNumber).orElseThrow(() -> new RuntimeException("Account not found : "+reciverAccountNumber));
+        Account senderAccount = saveAccount.findByNumber(senderAccountNumber).orElseThrow(() -> new AccountNotFoundException("Account not found : "+senderAccountNumber));
+        Account reciverAccount = saveAccount.findByNumber(reciverAccountNumber).orElseThrow(() -> new AccountNotFoundException("Account not found : "+reciverAccountNumber));
 
         if(senderAccount.getBalance().compareTo(transferAmount) < 0){
-            throw new RuntimeException("INSUFFICIENT BALANCE,CANNOT TRANSFER");
+            throw new InsufficientBalanceException("INSUFFICIENT BALANCE,CANNOT TRANSFER");
         }
         senderAccount.setBalance((senderAccount.getBalance()-transferAmount));
         Transaction senderTransaction = new Transaction(UUID.randomUUID().toString(),senderAccountType, Type.TRANSFER_OUT,senderAccountNumber,transferAmount, LocalDateTime.now(),note);
@@ -111,7 +114,7 @@ public class BankServiceImpl implements BankService {
 
     @Override
     public List<Account> getAccountBalance(String accountNumber) {
-        return Collections.singletonList(saveAccount.findByNumber(accountNumber).orElseThrow(() -> new RuntimeException("Account not found")));
+        return Collections.singletonList(saveAccount.findByNumber(accountNumber).orElseThrow(() -> new AccountNotFoundException("Account not found")));
     }
 
     private String getAccountNumber() {
