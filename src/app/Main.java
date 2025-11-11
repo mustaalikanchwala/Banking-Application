@@ -131,11 +131,13 @@ public class Main {
         String accountType = sc.nextLine().trim();
         System.out.println("INITIAL DEPOSIT(MIN:530) :  ");
         String amountStr = sc.nextLine().trim();
+        if(amountStr.isEmpty()) amountStr = "0";
         Double amountinit = Double.valueOf(amountStr);
         String accountNumber = bankService.openAccount(customerName,customerEmail,accountType);
-        if(amountinit > 0.0){
-            bankService.deposite(accountNumber,accountType,amountinit,"Initail Deposite");
-        }
+        bankService.deposite(accountNumber,accountType,amountinit,"Initail Deposite");
+
+
+
         System.out.println("ACCOUNT OPEN : " + accountNumber);
     }
 }

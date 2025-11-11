@@ -11,6 +11,7 @@ import repository.AccountRepo;
 import repository.CustomerRepo;
 import repository.TransactionRepo;
 import service.BankService;
+import utils.Validation;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -22,8 +23,31 @@ public class BankServiceImpl implements BankService {
   private final TransactionRepo saveTransaction = new TransactionRepo();
   private final CustomerRepo saveCustomer = new CustomerRepo();
 
+//  Validation
+    private final Validation<String> validatename = name -> {
+        if(name == null || name.isBlank()) throw new ValidationException("Name is required");
+};
+
+    private final Validation<String> validateEmail = new Validation<String>() {
+        @Override
+        public void validate(String email) throws ValidationException {
+            if(email == null || !email.contains("@")) throw  new ValidationException("Email is not valid ");
+        }
+    };
+    private final Validation<String> validateAccountType = accType -> {
+        if(accType == null || (!accType.equalsIgnoreCase("saving") && !accType.equalsIgnoreCase("current"))) throw new ValidationException("Choose a Valid Type : 1.SAVING 2.CURRENT");
+    };
+
+    private final Validation<Double> validateMinAmountRequried = amount -> {
+        if(amount == null || amount < 530 ) throw new ValidationException("Min Ammount 530 requried");
+    };
+
+
     @Override
     public String openAccount(String customerName, String customerEmail, String accountType) {
+        validatename.validate(customerName);
+        validateEmail.validate(customerEmail);
+        validateAccountType.validate(accountType);
         String customerId = UUID.randomUUID().toString();
         Customer newCustomer = new Customer(customerId,customerName,customerEmail);
         saveCustomer.save(newCustomer);
@@ -44,6 +68,7 @@ public class BankServiceImpl implements BankService {
 
     @Override
     public void deposite(String accountNumber,String Accounttype, Double depositeAmount, String note) {
+        validateMinAmountRequried.validate(depositeAmount);
         Account account = saveAccount.findByNumber(accountNumber).orElseThrow(() -> new AccountNotFoundException("Account not found : "+accountNumber));
         account.setBalance((account.getBalance()+depositeAmount));
         Transaction transaction = new Transaction(UUID.randomUUID().toString(),Accounttype, Type.DEPOSIT,accountNumber,depositeAmount, LocalDateTime.now(),note);
@@ -52,6 +77,7 @@ public class BankServiceImpl implements BankService {
 
     @Override
     public void withDraw(String accountNumber, String Accounttype, Double withdrawAmount, String note) {
+        validateMinAmountRequried.validate(withdrawAmount);
         Account account = saveAccount.findByNumber(accountNumber).orElseThrow(() -> new AccountNotFoundException("Account not found : "+accountNumber));
 //        The compareTo() method compares two numbers and returns a result:
 //
@@ -70,6 +96,7 @@ public class BankServiceImpl implements BankService {
 
     @Override
     public void transfer(String senderAccountNumber, String senderAccountType,String reciverAccountNumber,String reciverAccountType, Double transferAmount, String note) {
+        validateMinAmountRequried.validate(transferAmount);
         if(senderAccountNumber.equals(reciverAccountNumber)){
             throw new ValidationException("Cannot transfer in same Account");
         }
